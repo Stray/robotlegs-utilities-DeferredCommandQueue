@@ -8,11 +8,11 @@ Say you've got a series of asynchronous loading actions to be carried out by a s
 
 ## Ok - what do I need to do to use it? ##
 
-### First, set up the mapping for the DeferredCommandQueue itself ###
+#### First, set up the mapping for the DeferredCommandQueue itself
 
     injector.mapSingletonOf(IDeferredCommandQueue, DeferredCommandQueue)
 
-### Then wire some events to the RunNextDeferredCommand ### (really that should be called RunNextDeferredCommandCommand but that sounds stupid)
+#### Then wire some events to the RunNextDeferredCommand (really that should be called RunNextDeferredCommandCommand but that sounds stupid)
 
     // you need an event that's going to kick the process off (this is your custom event)
 	commandMap.mapEvent(DataRequestEvent.DATA_LOADING_REQUESTED, RunNextDeferredCommand);
@@ -20,7 +20,7 @@ Say you've got a series of asynchronous loading actions to be carried out by a s
 	// you also need to wire to an event that is fired when each process is finished (also a custom event)
 	commandMap.mapEvent(SomeServiceEvent.FINISHED_LOADING_DATA, RunNextDeferredCommand);
 	
-### Then populate your queue with the commands you'd like to run - this might happen in a command itself - let's assume it does
+#### Then populate your queue with the commands you'd like to run - this might happen in a command itself - let's assume it does
 
 	[Inject]
 	public var deferredCommandQueue:IDeferredCommandQueue;
@@ -33,6 +33,39 @@ Say you've got a series of asynchronous loading actions to be carried out by a s
 		// by default, the command will only be added if it has never been in the queue.
 		// pass true as the 2nd parameter if you really want to repeat it
 		deferredCommandQueue.addCommandToQueue(SomeCommand, true);
+	} 
+	                 
+	
+##### An alternative implementation - where you're receiving payload on an event that determines the commands to add:
+
+	// this command is mapped to the data loading request event instead of RunNextDeferredCommand
+                     
+	[Inject]
+	public var deferredCommandQueue:IDeferredCommandQueue;
+	
+	[Inject]
+	public var dataRequestEvent:DataRequestEvent;
+	
+	// your commands might be stored in a lookup object that allows you to retrieve them using the data request payload 
+	// so that UserData is mapped to LoadUserDataCommand etc.
+	[Inject]
+	public var dataLoadingCommandsLookup:IDataCommandsLookup;
+	
+	override public function execute():void
+	{
+		
+		var dataRequestTypes:Vector.<Class> = dataRequestEvent.dataRequestTypes;
+		
+		for each (var nextDataClass:Class in dataRequestTypes)
+		{
+			var dataLoadingCommandClass:CommandClass = dataLoadingCommandsLookup.getCommandForDataClass(nextDataClass);
+			deferredCommandQueue.addCommandToQueue(dataLoadingCommandClass);
+		}
+		
+	    // now run the RunNextDeferredCommand (or you could simply map it to the same event as this one but afterwards)
+		var runNextDeferredCommand:Command = injector.instantiate(RunNextDeferredCommand);
+		runNextDeferredCommand.execute();
+		
 	}
 	
 
@@ -52,7 +85,12 @@ When you add a command to the queue it returns true or false based on whether th
 ## Where's clearHistory / listCommands / stop / resume ... ##
 
 I built the minimum implementation required for my own purposes. Fork-it-n-fix-it if you want more.            
-   
+  
+ 
+## Why not just queue in the service?
+
+This allows you to queue across services, and to keep your queuing logic out of the service layer.
+
 
 ## What's the support directory for? ##
 
