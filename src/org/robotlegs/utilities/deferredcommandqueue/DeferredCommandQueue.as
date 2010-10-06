@@ -6,8 +6,8 @@ package org.robotlegs.utilities.deferredcommandqueue {
 	
 	public class DeferredCommandQueue implements IDeferredCommandQueue {
 		
-		private var _commandVector:Vector.<Class>;
-		private var _commandHistoryVector:Vector.<Class>;
+		private var _commands:Vector.<Class>;
+		private var _commandsHistory:Vector.<Class>;
 		
 		public function DeferredCommandQueue() {
 		}
@@ -22,7 +22,7 @@ package org.robotlegs.utilities.deferredcommandqueue {
 		
 		public function addCommandToQueue(commandClass:Class, isRepeated:Boolean = false):Boolean
 		{
-			if(isNotACommand(commandClass))
+			if(!isACommand(commandClass))
 			{
 				throw(new IllegalOperationError('The class you passed as a Command does not implement the required execute method.'));
 			}
@@ -35,7 +35,7 @@ package org.robotlegs.utilities.deferredcommandqueue {
 				}
 			}
 			
-			commandVector.push(commandClass);
+			commands.push(commandClass);
 			
 			return true;
 		}
@@ -45,10 +45,10 @@ package org.robotlegs.utilities.deferredcommandqueue {
 		
 		public function getNextCommand():Class
 		{
-			if(commandVector.length > 0)
+			if(commands.length > 0)
 			{
-				var nextCommand:Class = commandVector.shift();
-				commandHistoryVector.push(nextCommand);
+				var nextCommand:Class = commands.shift();
+				commandsHistory.push(nextCommand);
 				return nextCommand;
 			}
 			return null;
@@ -56,40 +56,40 @@ package org.robotlegs.utilities.deferredcommandqueue {
         
 		public function get hasNextCommand():Boolean
 		{
-			return (commandVector.length > 0);
+			return (commands.length > 0);
 		}
         
 
 		
-       	private function get commandVector():Vector.<Class>
+       	private function get commands():Vector.<Class>
 		{	
-	    	return _commandVector || (_commandVector = new Vector.<Class>());
+	    	return _commands || (_commands = new Vector.<Class>());
 		}
 		
-		private function get commandHistoryVector():Vector.<Class>
+		private function get commandsHistory():Vector.<Class>
 		{	
-	    	return _commandHistoryVector || (_commandHistoryVector = new Vector.<Class>());
+	    	return _commandsHistory || (_commandsHistory = new Vector.<Class>());
 		}
 		
 	   
-	 	private function isNotACommand(commandClass:Class):Boolean
+	 	private function isACommand(commandClass:Class):Boolean
 		{
 			if(describeType(commandClass).factory.method.(@name == "execute").length() > 0)
 			{
-				return false;
+				return true;
 			}
 			
-			return true;
+			return false;
 		}
 		
 		private function isInQueue(commandClass:Class):Boolean
 		{
-			return (commandVector.indexOf(commandClass) != -1)
+			return (commands.indexOf(commandClass) != -1)
 		}
 		
 		private function isInHistory(commandClass:Class):Boolean
 		{
-			return (commandHistoryVector.indexOf(commandClass) != -1)
+			return (commandsHistory.indexOf(commandClass) != -1)
 		} 
 	}
 }
