@@ -18,6 +18,7 @@ Say you've got a series of asynchronous loading actions to be carried out by a s
 	commandMap.mapEvent(DataRequestEvent.DATA_LOADING_REQUESTED, RunNextDeferredCommand);
 
 	// you also need to wire to an event that is fired when each process is finished (also a custom event)
+        // you could map to multiple events here if you're using different services.
 	commandMap.mapEvent(SomeServiceEvent.FINISHED_LOADING_DATA, RunNextDeferredCommand);
 	
 #### Then populate your queue with the commands you'd like to run - this might happen in a command itself - let's assume it does
@@ -36,7 +37,7 @@ Say you've got a series of asynchronous loading actions to be carried out by a s
 	} 
 	                 
 	
-##### An alternative implementation - where you're receiving payload on an event that determines the commands to add:
+#### An alternative implementation - where you're receiving payload on an event that determines the commands to add:
 
 	// this command is mapped to the data loading request event instead of RunNextDeferredCommand
                      
@@ -90,6 +91,11 @@ I built the minimum implementation required for my own purposes. Fork-it-n-fix-i
 ## Why not just queue in the service?
 
 This allows you to queue across services, and to keep your queuing logic out of the service layer.
+
+
+## Are the Commands asynchronous?
+
+The queue is intended for Commands which call async services, but the Commands themselves are born-execute-die instantly, so they don't persist themselves in order to have an asynchronous life style.
 
 
 ## What's the support directory for? ##
